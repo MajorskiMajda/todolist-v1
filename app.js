@@ -81,17 +81,16 @@ app.post("/", (req, res) => {
         })
     }
 })
+
+async function itemDelete() {
+    const del = await Item.findByIdAndDelete(checkedItemId)
+}
 app.post("/delete", (req, res) => {
     const listName = req.body.listName;
     const checkedItemId = (req.body.checkbox);
-    async function itemDelete() {
-        const del = await Item.findByIdAndDelete(checkedItemId)
-    }
+
 
     if (listName === "day") {
-        async function itemDelete() {
-            const del = await Item.findByIdAndDelete(checkedItemId)
-        }
         itemDelete().then(() => {
             res.redirect("/")
         })
