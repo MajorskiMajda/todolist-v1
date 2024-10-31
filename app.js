@@ -89,12 +89,6 @@ app.post("/delete", (req, res) => {
     const listName = req.body.listName;
     const checkedItemId = (req.body.checkbox);
 
-
-    if (listName === "day") {
-        itemDelete().then(() => {
-            res.redirect("/")
-        })
-    }
     List.findOneAndUpdate(
         { name: listName },
         { $pull: { items: { _id: checkedItemId } } }
