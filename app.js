@@ -57,75 +57,77 @@ app.get("/", (req, res) => {
     
 })
 
-app.post("/", (req, res) => {
-
+app.post("/", async (req, res) => {
     const itemName = req.body.newItem;
     const listName = req.body.list;
 
-
-    
     const item = new Item({
         name: itemName
-    })
+    });
 
-    if (listName === "day") {
-        
-        item.save().then(()=> {
-        res.redirect("/")
-    })
-    } else {
-        List.findOne({name: listName}).then((foundList) => {
+    try {
+        if (listName === "day") {
+            await item.save();
+            res.redirect("/");
+        } else {
+            const foundList = await List.findOne({ name: listName });
             foundList.items.push(item);
-            foundList.save()
-            res.redirect("/" + listName)
-        })
+            await foundList.save();
+            res.redirect("/" + listName);
+        }
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Error saving item to the list");
     }
-})
+});
 
 async function itemDelete(checkedItemId) {
     const del = await Item.findByIdAndDelete(checkedItemId)
 }
-app.post("/delete", (req, res) => {
+app.post("/delete",async (req, res) => {
     const listName = req.body.listName;
     const checkedItemId = (req.body.checkbox);
+    try {
+        // Delete the item from the Item collection
+        if (listName === "day") {
+            await itemDelete(checkedItemId);
+        }
 
-    if (listName === "day") {
-        itemDelete(checkedItemId).then(() => {
-            res.redirect("/")
-        })
-    }
+        // Update the list by pulling the deleted item
+        await List.findOneAndUpdate(
+            { name: listName },
+            { $pull: { items: { _id: checkedItemId } } }
+        );
 
-
-    List.findOneAndUpdate(
-        { name: listName },
-        { $pull: { items: { _id: checkedItemId } } }
-    ).then((foundList) => {
-        res.redirect("/" + listName); // Redirect regardless of whether an error occurred or not
-    }).catch((err) => {
-        console.error(err); // Log the error
+        // Redirect after both operations are successful
+        res.redirect("/" + listName);
+    } catch (err) {
+        console.error(err);
         res.status(500).send("Error updating the list");
-    });
+    }
     
 })
 
 app.get("/:customListName",  (req, res) => {
     const customListName = _.capitalize(req.params.customListName);
+    if (customListName === 'Favicon.ico') {
+        return res.status(204).send(); // No content
+    }
 
     List.findOne({ name: customListName }).then((foundList) => {
-        if (!foundList && customListName!== 'favicon.ico') {
+        if (!foundList) {
             const list = new List({
                 name: customListName,
                 items: defaultItems
-                
-            }   )
+            });
             list.save().then(() => {
                 // Redirect to the new list
                 res.redirect("/" + customListName);
             });
         } else {
-            res.render("list", {listTitle: foundList.name, newListItems: foundList.items})
+            res.render("list", { listTitle: foundList.name, newListItems: foundList.items });
         }
-    })
+    });
 });
 
 
