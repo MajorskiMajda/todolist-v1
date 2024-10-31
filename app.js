@@ -84,13 +84,17 @@ app.post("/", (req, res) => {
 app.post("/delete", (req, res) => {
     const listName = req.body.listName;
     const checkedItemId = (req.body.checkbox);
+    async function itemDelete() {
+        const del = await Item.findByIdAndDelete(checkedItemId)
+    }
 
     if (listName === "day") {
         async function itemDelete() {
             const del = await Item.findByIdAndDelete(checkedItemId)
         }
-        itemDelete()
-        res.redirect("/")
+        itemDelete().then(() => {
+            res.redirect("/")
+        })
     }
     List.findOneAndUpdate(
         { name: listName },
